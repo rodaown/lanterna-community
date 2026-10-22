@@ -52,8 +52,12 @@
   const HUNTER = 'H', FIREBALL = 'V', LURE = 'L', CRYSTAL = 'C';
   const CRYPT = 'R', GATE = 'G', BRAZIER = 'B', TOMB = 'T', ALTAR = 'X';
   const WHISPER = 'W';   // sound effect: an invisible floor cell; a whisper is heard when Scintilla walks on it or next to it (once per level)
+  const LAMP = 'I';      // Atto III: a street lamp in the wall; lit when you pass next to it, its light keeps the Ombre away
+  const MIRROR_A = '/', MIRROR_B = '\\';   // Atto III: mirrors (you can turn them); they send the lantern light on at 90°
+  const DOOR = 'Q';      // Atto III: a door of the Comune, opened only by a beam of light reflected by a mirror
+  const GUARD = 'U';     // Atto III: a guard of the Comune (patrols its corridor, sees the lantern light); the cell itself is floor
   const SOUND_CELLS = 'WZPADN'; // all sound-effect cells (W and its alternatives, see whispers.js); all behave as floor
-  const ALLOWED = new Set([WALL, FLOOR, START, EXIT, GEM, ENEMY, FIRE, KEY, HUNTER, FIREBALL, LURE, CRYSTAL, CRYPT, GATE, BRAZIER, TOMB, ALTAR, ...SOUND_CELLS]);
+  const ALLOWED = new Set([WALL, FLOOR, START, EXIT, GEM, ENEMY, FIRE, KEY, HUNTER, FIREBALL, LURE, CRYSTAL, CRYPT, GATE, BRAZIER, TOMB, ALTAR, GUARD, LAMP, MIRROR_A, MIRROR_B, DOOR, ...SOUND_CELLS]);
   const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
   const DEFAULT_SPEED = 0.7; // secondi a casella per le Ombre
 
@@ -86,6 +90,9 @@
             (meta.tipsByLang[lang] = meta.tipsByLang[lang] || []).push(tip);
           }
           else (meta.tips = meta.tips || []).push(tip);
+        } else if (key === 'guard' && !lang) {
+          // Atto III: how a guard moves. "guard: COL,ROW route|loop|post …" (see guardPlan below)
+          (meta.guardLines = meta.guardLines || []).push({ val, line: i + 1 });
         } else if (lang) {
           meta.texts = meta.texts || {};
           (meta.texts[key] = meta.texts[key] || {})[lang] = val;
@@ -112,7 +119,7 @@
       if (row.length !== w) errors.push({ line: lineOf(y), msg: `Questa riga è lunga ${row.length} caratteri, la prima ne ha ${w}. Tutte le righe devono avere la stessa lunghezza.` });
       for (let x = 0; x < row.length; x++) {
         const c = row[x];
-        if (!ALLOWED.has(c)) { errors.push({ line: lineOf(y), msg: `Carattere non riconosciuto "${c}" in colonna ${x + 1}. Usa # . S E * M F K H V L C R G B T X e i suoni W Z P A D N` }); continue; }
+        if (!ALLOWED.has(c)) { errors.push({ line: lineOf(y), msg: `Carattere non riconosciuto "${c}" in colonna ${x + 1}. Usa # . S E * M F K H V L C R G B T X U I / \\ Q e i suoni W Z P A D N` }); continue; }
         if (c === START) { starts++; start = { x, y }; }
         if (c === EXIT) { exits++; exit = { x, y }; }
         if (c === GEM) gems++;
@@ -196,12 +203,48 @@
       });
     }
     level.warnings = level.warnings || [];
+    // guards (Atto III): every "U" cell, and how each one moves ("guard:" lines in the header, written by the editor)
+    //   guard: 12,5 route 18,5 18,11   → up and down along the stops (12,5 → 18,5 → 18,11 → 18,5 → …)
+    //   guard: 12,5 loop 18,5 18,11    → a closed round (after the last stop it walks back to the first)
+    //   guard: 12,5 post 3             → a sentry: stands still and turns round every 3 s
+    //   no line (or "auto")            → up and down the longest straight corridor through its cell
+    // columns and rows count from 1, like the editor and the "tip: at" lines
+    level.guards = [];
+    rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] === GUARD) level.guards.push({ x, y }); });
+    level.guardPlans = [];
+    for (const { val, line } of meta.guardLines || []) {
+      const plan = guardPlan(val);
+      if (plan.error) { errors.push({ line, msg: plan.error }); continue; }
+      if (cellAt(level, plan.x, plan.y) !== GUARD) { errors.push({ line, msg: `La riga guard: parla della casella colonna ${plan.x + 1}, riga ${plan.y + 1}, ma lì non c'è una guardia (U).` }); continue; }
+      if (level.guardPlans.some(q => q.x === plan.x && q.y === plan.y)) { errors.push({ line, msg: `Due righe guard: per la stessa guardia (colonna ${plan.x + 1}, riga ${plan.y + 1}).` }); continue; }
+      let bad = null;
+      const stops = [{ x: plan.x, y: plan.y }, ...plan.pts];
+      for (let i = 1; i < stops.length && !bad; i++) {
+        const q = stops[i];
+        if (q.x < 0 || q.y < 0 || q.x >= w || q.y >= h) bad = `La tappa ${i} (colonna ${q.x + 1}, riga ${q.y + 1}) è fuori dal labirinto.`;
+        else if (!isOpen(level, q.x, q.y)) bad = `La tappa ${i} (colonna ${q.x + 1}, riga ${q.y + 1}) è su un muro.`;
+        else {
+          const d = bfs(level, stops[i - 1])[q.y * w + q.x];
+          if (d < 0) bad = `La tappa ${i} (colonna ${q.x + 1}, riga ${q.y + 1}) non si raggiunge dalla tappa prima.`;
+          else if (d > 80) bad = `La tappa ${i} è a ${d} passi dalla tappa prima: al massimo 80, aggiungi una tappa in mezzo.`;
+        }
+      }
+      if (!bad && plan.mode === 'loop' && stops.length > 1) {
+        const d = bfs(level, stops[stops.length - 1])[plan.y * w + plan.x];
+        if (d < 0 || d > 80) bad = 'Nel giro chiuso l\'ultima tappa deve poter tornare alla guardia (al massimo 80 passi).';
+      }
+      if (bad) { errors.push({ line, msg: bad }); continue; }
+      level.guardPlans.push(plan);
+    }
     const torch = parseInt(meta.torch, 10);
     level.torch = Number.isFinite(torch) ? Math.max(1, Math.min(10, torch)) : 3;
     if (meta.torch && !Number.isFinite(torch)) errors.push({ line: null, msg: `torch deve essere un numero, trovato "${meta.torch}".` });
     const speed = parseFloat(String(meta.speed || '').replace(',', '.'));
     level.speed = Number.isFinite(speed) ? Math.max(0.1, Math.min(3, speed)) : DEFAULT_SPEED;
     if (meta.speed && !Number.isFinite(speed)) errors.push({ line: null, msg: `speed deve essere un numero (secondi a casella, per esempio 0.25), trovato "${meta.speed}".` });
+    const dr = parseFloat(String(meta.drain || '').replace(',', '.'));
+    level.drain = Number.isFinite(dr) && dr > 0 ? Math.max(2, Math.min(60, dr)) : null;   // Atto III: the lantern light shrinks by 1 every N seconds
+    if (meta.drain && !Number.isFinite(dr)) errors.push({ line: null, msg: `drain deve essere un numero di secondi (per esempio 8), trovato "${meta.drain}".` });
     const fl = parseInt(meta.flash, 10);
     level.flash = Number.isFinite(fl) ? Math.max(0, Math.min(20, fl)) : null;   // lampi at start (null = game default)
     level.tips = meta.tips || [];                 // plain "tip:" lines = Italian
@@ -218,6 +261,33 @@
     return level;
   }
 
+  // "12,5 route 18,5 18,11" → { x: 11, y: 4, mode: 'route', pts: [{x:17,y:4}, {x:17,y:10}], turn: 2.5 }
+  const GUARD_MODES = ['auto', 'route', 'loop', 'post'];
+  function guardPlan(val) {
+    const parts = String(val).trim().split(/\s+/);
+    const pt = t => { const m = /^(\d+),(\d+)$/.exec(t || ''); return m ? { x: parseInt(m[1], 10) - 1, y: parseInt(m[2], 10) - 1 } : null; };
+    const at = pt(parts[0]);
+    if (!at) return { error: `Riga guard: non valida: "${val}". Scrivi per esempio "guard: 12,5 route 18,5 18,11".` };
+    const mode = (parts[1] || 'auto').toLowerCase();
+    if (!GUARD_MODES.includes(mode)) return { error: `Movimento della guardia sconosciuto: "${parts[1]}". Usa route, loop, post o auto.` };
+    const plan = { x: at.x, y: at.y, mode, pts: [], turn: 2.5 };
+    if (mode === 'post') {
+      const t = parseFloat(String(parts[2] || '').replace(',', '.'));
+      if (parts[2] && !Number.isFinite(t)) return { error: `Sentinella: "${parts[2]}" non è un numero di secondi.` };
+      if (Number.isFinite(t)) plan.turn = Math.max(1, Math.min(10, t));
+    } else if (mode === 'route' || mode === 'loop') {
+      for (const t of parts.slice(2)) { const q = pt(t); if (!q) return { error: `Tappa non valida: "${t}". Scrivi colonna,riga (per esempio 18,5).` }; plan.pts.push(q); }
+      if (!plan.pts.length) return { error: 'Questa guardia ha il movimento a tappe ma nessuna tappa: aggiungine almeno una.' };
+    }
+    return plan;
+  }
+  function guardLine(plan) {
+    const c = q => `${q.x + 1},${q.y + 1}`;
+    if (plan.mode === 'post') return `guard: ${c(plan)} post ${plan.turn}`;
+    if (plan.mode === 'route' || plan.mode === 'loop') return `guard: ${c(plan)} ${plan.mode} ${plan.pts.map(c).join(' ')}`;
+    return null;
+  }
+
   /* ---------- scrittura ---------- */
   function serialize({ name, torch, par, speed, extra, rows }) {
     const head = [];
@@ -231,7 +301,8 @@
 
   /* ---------- utilità ---------- */
   const cellAt = (lv, x, y) => (x < 0 || y < 0 || x >= lv.w || y >= lv.h) ? WALL : lv.rows[y][x];
-  const isOpen = (lv, x, y) => { const c = cellAt(lv, x, y); return c !== WALL && c !== CRYSTAL; };
+  // a door of the Comune (Q) counts as open here: the level must be solvable once the beams have opened it
+  const isOpen = (lv, x, y) => { const c = cellAt(lv, x, y); return c !== WALL && c !== CRYSTAL && c !== LAMP && c !== MIRROR_A && c !== MIRROR_B; };
 
   function bfs(lv, from) {
     const { w, h } = lv;
@@ -394,7 +465,7 @@
     return { rows, w, h, par: bfs(lv, lv.start)[ey * w + ex] };
   }
 
-  const Maze = { DEFAULT_SPEED, WALL, FLOOR, START, EXIT, GEM, ENEMY, FIRE, KEY, HUNTER, FIREBALL, LURE, CRYSTAL, CRYPT, GATE, BRAZIER, TOMB, ALTAR, WHISPER, SOUND_CELLS, DIRS, parseLevel, serialize, bfs, shortestPath, stats, generate, cellAt, isOpen };
+  const Maze = { DEFAULT_SPEED, WALL, FLOOR, START, EXIT, GEM, ENEMY, FIRE, KEY, HUNTER, FIREBALL, LURE, CRYSTAL, CRYPT, GATE, BRAZIER, TOMB, ALTAR, GUARD, LAMP, MIRROR_A, MIRROR_B, DOOR, WHISPER, SOUND_CELLS, DIRS, guardPlan, guardLine, parseLevel, serialize, bfs, shortestPath, stats, generate, cellAt, isOpen };
   if (typeof module !== 'undefined' && module.exports) module.exports = Maze;
   else root.Maze = Maze;
 })(typeof window !== 'undefined' ? window : this);

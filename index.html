@@ -32,6 +32,10 @@
   --c-fire: #D9402B;
   --c-key: #E0A800;
   --c-hunter: #2E8FB0;
+  --c-guard: #4A6496;
+  --c-lamp: #E8B04A;
+  --c-mirror: #BFD3E6;
+  --c-door: #8C6A3E;
   --c-fireball: #FF7A1A;
   --c-lure: #A6D94A;
   --c-crystal: #4FC8E8;
@@ -97,6 +101,12 @@ button:disabled { opacity: 0.45; cursor: default; }
 .toolinfo { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px; font-size: 13px; line-height: 1.45; }
 .toolinfo b { display: block; margin-bottom: 3px; }
 .toolinfo p { margin: 0; color: var(--ink-soft); }
+.guardbox { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--c-guard); border-radius: 8px; font-size: 13px; line-height: 1.45; display: grid; gap: 8px; }
+.guardbox b { display: block; }
+.guardbox p { margin: 0; color: var(--ink-soft); }
+.guardbox select, .guardbox input { width: 100%; }
+.guardbox .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.guardbox button { font-size: 12px; padding: 6px 8px; }
 .tgroup h3 { margin: 0 0 5px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
 .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .tool { display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 13px; padding: 6px 8px; }
@@ -104,6 +114,10 @@ button:disabled { opacity: 0.45; cursor: default; }
 .sw { width: 14px; height: 14px; border-radius: 3px; flex: none; border: 1px solid var(--line); }
 .tool kbd { margin-left: auto; font-family: var(--f-mono); font-size: 11px; color: var(--ink-soft); }
 .small { font-size: 12px; color: var(--ink-soft); line-height: 1.45; margin: 8px 0 0; }
+.wave { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: 6px; align-items: end; margin-bottom: 6px; }
+.wave .wn { font-size: 12px; font-weight: 700; color: var(--ink-soft); padding-bottom: 9px; white-space: nowrap; }
+.wave label { font-size: 11px; }
+.wave button { padding: 6px 9px; }
 
 .checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .checks li { display: grid; grid-template-columns: 16px 1fr; gap: 6px; line-height: 1.4; }
@@ -124,10 +138,23 @@ textarea { width: 100%; box-sizing: border-box; height: 180px; font-family: var(
 /* share with the community: dialog */
 dialog { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); width: min(460px, calc(100vw - 32px)); padding: 18px 20px; }
 dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+#folderDlg { width: min(760px, calc(100vw - 32px)); }
+.lvnav { display: inline-flex; align-items: center; gap: 4px; }
+.lvnav select { font: inherit; max-width: 230px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); }
+.lvnav button { padding: 7px 9px; }
+.ftable-wrap { max-height: min(60vh, 520px); overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.ftable { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ftable th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: 12px; color: var(--ink-soft); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.ftable td { padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.ftable td.nm { white-space: normal; }
+.ftable td.num { font-variant-numeric: tabular-nums; }
+.ftable tbody tr { cursor: pointer; }
+.ftable tbody tr:hover, .ftable tbody tr:focus { background: var(--bg); outline: none; }
+.ftable .ok { color: #3FAE6A; } .ftable .bad { color: #D9534F; }
 dialog h2 { font-size: 16px; margin: 0 0 10px; }
 dialog ol { margin: 12px 0 0; padding-left: 20px; line-height: 1.5; }
 dialog input { width: 100%; }
-.dlg-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.dlg-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 </style>
 
 <div class="app">
@@ -136,6 +163,13 @@ dialog input { width: 100%; }
     <button id="undo" type="button" title="Ctrl+Z">Annulla</button>
     <button id="openBtn" type="button">Apri file…</button>
     <input id="openFile" type="file" accept=".txt,text/plain" hidden>
+    <button id="folderBtn" type="button" title="Elenca i livelli di una cartella">Apri cartella…</button>
+    <input id="openDir" type="file" webkitdirectory multiple hidden>
+    <span class="lvnav" id="lvNav" hidden>
+      <button id="lvPrev" type="button" title="Livello precedente della cartella (Pag ↑)" aria-label="Livello precedente">◀</button>
+      <select id="lvSel" aria-label="Livello della cartella"></select>
+      <button id="lvNext" type="button" title="Livello successivo della cartella (Pag ↓)" aria-label="Livello successivo">▶</button>
+    </span>
     <button id="copy" type="button">Copia testo</button>
     <button id="saveAs" type="button" title="Salva in un altro file (Ctrl/Cmd+Maiusc+S)">Salva come…</button>
     <button id="save" class="primary" type="button" title="Ctrl/Cmd+S">Salva</button>
@@ -145,8 +179,8 @@ dialog input { width: 100%; }
     <section>
       <h2>Genera un labirinto</h2>
       <div class="row">
-        <label for="gw">Larghezza<input id="gw" type="number" min="7" max="401" step="2" value="41"></label>
-        <label for="gh">Altezza<input id="gh" type="number" min="7" max="401" step="2" value="41"></label>
+        <label for="gw">Larghezza<input id="gw" type="number" min="7" max="71" step="2" value="41"></label>
+        <label for="gh">Altezza<input id="gh" type="number" min="7" max="71" step="2" value="41"></label>
       </div>
       <div class="row">
         <label for="gbraid">Anelli (%)<input id="gbraid" type="number" min="0" max="100" step="5" value="10"></label>
@@ -176,6 +210,23 @@ dialog input { width: 100%; }
       </div>
       <label for="lspeed" style="margin-bottom: 8px">Velocità Ombre (secondi a casella)<input id="lspeed" type="number" min="0.1" max="3" step="0.05" placeholder="0.7 (predefinita)"></label>
       <label class="check" for="lparAuto"><input id="lparAuto" type="checkbox" checked> Par uguale al percorso più breve</label>
+      <label for="ldrain" style="margin-top: 8px">Luce che si consuma (Atto III): secondi per perdere una casella di luce<input id="ldrain" type="number" min="2" max="60" step="1" placeholder="vuoto = la luce non si consuma"></label>
+    </section>
+
+    <section id="cryptSec">
+      <h2>Cripte</h2>
+      <p class="small" id="cryptNote" style="margin: 0 0 8px"></p>
+      <label for="ctype" style="margin-bottom: 8px">Tipo di cripta<select id="ctype">
+        <option value="guardian">Col Guardiano</option>
+        <option value="bonus">Segreta (facoltativa, con premio)</option>
+      </select></label>
+      <div class="small" style="margin: 0 0 4px">Ondate (escono dalle tombe una dopo l'altra)</div>
+      <div id="cwaves"></div>
+      <button type="button" id="cwaveAdd">+ Aggiungi ondata</button>
+      <div class="row" style="margin-top: 8px">
+        <label for="chp" id="chpL">Colpi per liberare il Guardiano<input id="chp" type="number" min="1" max="9" step="1"></label>
+        <label for="creward" id="crewardL">Premio (lampi)<input id="creward" type="number" min="1" max="9" step="1"></label>
+      </div>
     </section>
 
     <section>
@@ -193,7 +244,8 @@ dialog input { width: 100%; }
         <div class="tgroup"><h3>Nemici</h3><div class="tools">
           <button class="tool" type="button" data-t="M" aria-pressed="false"><span class="sw" style="background: var(--c-enemy)"></span>Ombra <kbd>6</kbd></button>
           <button class="tool" type="button" data-t="H" aria-pressed="false"><span class="sw" style="background: var(--c-hunter)"></span>Cacciatrice <kbd>9</kbd></button>
-          <button class="tool" type="button" data-t="X" aria-pressed="false" title="Dove sorge il Guardiano alla fine delle ondate (solo nelle cripte col Guardiano, non in quelle segrete). I colpi per liberarlo: riga guardian: nell'intestazione."><span class="sw" style="background: var(--c-altar)"></span>Guardiano <kbd>X</kbd></button>
+          <button class="tool" type="button" data-t="U" aria-pressed="false"><span class="sw" style="background: var(--c-guard)"></span>Guardia <kbd>U</kbd></button>
+          <button class="tool" type="button" data-t="X" aria-pressed="false" title="Dove sorge il Guardiano alla fine delle ondate (solo nelle cripte col Guardiano, non in quelle segrete). I colpi per liberarlo si scelgono nel riquadro Cripte."><span class="sw" style="background: var(--c-altar)"></span>Guardiano <kbd>X</kbd></button>
         </div></div>
         <div class="tgroup"><h3>Oggetti da raccogliere</h3><div class="tools">
           <button class="tool" type="button" data-t="*" aria-pressed="false"><span class="sw" style="background: var(--c-gem)"></span>Gemma <kbd>5</kbd></button>
@@ -204,6 +256,12 @@ dialog input { width: 100%; }
         <div class="tgroup"><h3>Luci</h3><div class="tools">
           <button class="tool" type="button" data-t="F" aria-pressed="false"><span class="sw" style="background: var(--c-fire)"></span>Falò <kbd>7</kbd></button>
           <button class="tool" type="button" data-t="C" aria-pressed="false"><span class="sw" style="background: var(--c-crystal)"></span>Cristallo <kbd>C</kbd></button>
+          <button class="tool" type="button" data-t="I" aria-pressed="false"><span class="sw sw-mk" data-mk="I"></span>Lampione <kbd>I</kbd></button>
+        </div></div>
+        <div class="tgroup"><h3>Specchi e porte (Atto III)</h3><div class="tools">
+          <button class="tool" type="button" data-t="/" aria-pressed="false"><span class="sw sw-mk" data-mk="/"></span>Specchio ╱ <kbd>J</kbd></button>
+          <button class="tool" type="button" data-t="\" aria-pressed="false"><span class="sw sw-mk" data-mk="\"></span>Specchio ╲ <kbd>K</kbd></button>
+          <button class="tool" type="button" data-t="Q" aria-pressed="false"><span class="sw sw-mk" data-mk="Q"></span>Porta del Comune <kbd>Q</kbd></button>
         </div></div>
         <div class="tgroup"><h3>Cripta</h3><div class="tools">
           <button class="tool" type="button" data-t="R" aria-pressed="false"><span class="sw" style="background: var(--c-crypt)"></span>Cripta <kbd>R</kbd></button>
@@ -221,6 +279,19 @@ dialog input { width: 100%; }
         </div></div>
       </div>
       <div class="toolinfo" id="toolInfo" aria-live="polite"><b id="toolInfoName"></b><p id="toolInfoTxt"></p><button id="toolListen" type="button" hidden style="margin-top:8px">▶ Ascolta</button></div>
+      <div class="guardbox" id="guardBox" hidden>
+        <b id="guardWhere"></b>
+        <label for="guardMode">Movimento<select id="guardMode">
+          <option value="auto">Automatico: avanti e indietro nel corridoio</option>
+          <option value="route">Avanti e indietro tra le tappe</option>
+          <option value="loop">Giro chiuso tra le tappe</option>
+          <option value="post">Sentinella: ferma, si gira</option>
+        </select></label>
+        <p id="guardHelp"></p>
+        <div class="row2" id="guardStops"><button id="guardUndoPt" type="button">Togli l'ultima tappa</button><button id="guardClearPts" type="button">Cancella le tappe</button></div>
+        <label for="guardTurn" id="guardTurnL">Si gira ogni (secondi)<input id="guardTurn" type="number" min="1" max="10" step="0.5"></label>
+        <div class="row2"><button id="guardDone" type="button">Fine</button><button id="guardDel" type="button">Togli la guardia</button></div>
+      </div>
       <label class="check" for="showPath" style="margin-top: 10px"><input id="showPath" type="checkbox"> Mostra il percorso più breve</label>
       <label class="check" for="showTiles"><input id="showTiles" type="checkbox" checked> Grafica del gioco (da vicino)</label>
       <p class="small">Clic o trascina per disegnare. Per spostare la vista: strumento Sposta, barra spaziatrice + trascina, tasto destro, rotellina o due dita. Per lo zoom: Ctrl + rotellina, pizzico o i tasti in basso a destra.</p>
@@ -245,18 +316,30 @@ dialog input { width: 100%; }
       <button id="share" class="full" type="button">Condividi con la community</button>
     </section>
   </aside>
+  <dialog id="folderDlg" aria-labelledby="folderTitle">
+    <form method="dialog">
+      <h2 id="folderTitle">Livelli nella cartella</h2>
+      <p class="small" id="folderInfo" style="margin: 0 0 10px"></p>
+      <div class="ftable-wrap"><table class="ftable">
+        <thead><tr><th>File</th><th>Nome</th><th>Dimensioni</th><th>Percorso</th><th>Stato</th></tr></thead>
+        <tbody id="folderRows"></tbody>
+      </table></div>
+      <div class="dlg-row"><button id="folderRescan" type="button">Aggiorna</button><button value="cancel" type="submit">Chiudi</button></div>
+    </form>
+  </dialog>
+
   <dialog id="shareDlg" aria-labelledby="shareTitle">
     <form method="dialog">
       <h2 id="shareTitle">Condividi con la community</h2>
       <label for="shareName">Nome del file<input id="shareName" type="text" autocomplete="off" spellcheck="false"></label>
       <p class="small">Solo lettere minuscole, numeri e trattini. Diventa <b id="sharePath"></b>.</p>
       <ol class="small">
-        <li>Si apre GitHub con il labirinto già pronto. Accedi o crea un account.</li>
-        <li>Se il testo non c'è, incollalo (Ctrl+V o Cmd+V): l'editor l'ha già copiato.</li>
-        <li>Premi <b>Commit changes…</b> → <b>Propose changes</b> → <b>Create pull request</b>. GitHub fa da solo una tua copia del progetto.</li>
+        <li><b>Solo la prima volta:</b> premi <b>1. Crea la tua copia</b>. Si apre GitHub: accedi o crea un account (è gratis), premi <b>Create fork</b> e torna qui.</li>
+        <li>Premi <b>2. Apri GitHub</b>: si apre il nuovo file nella cartella giusta. Se il testo non c'è, incollalo (Ctrl+V o Cmd+V): l'editor l'ha già copiato.</li>
+        <li>Premi <b>Commit changes…</b> → <b>Propose changes</b>, poi <b>Create pull request</b>.</li>
         <li>Un controllo automatico prova il labirinto, poi il proprietario lo approva.</li>
       </ol>
-      <div class="dlg-row"><button value="cancel" type="submit">Annulla</button><button id="shareGo" class="primary" type="button">Apri GitHub</button></div>
+      <div class="dlg-row"><button value="cancel" type="submit">Annulla</button><button id="shareFork" type="button">1. Crea la tua copia</button><button id="shareGo" class="primary" type="button">2. Apri GitHub</button></div>
     </form>
   </dialog>
 
@@ -292,7 +375,7 @@ dialog input { width: 100%; }
 
   const rowsOf = () => grid.map(r => r.join(''));
   function pushUndo() {
-    undoStack.push(JSON.stringify({ rows: rowsOf(), name: $('lname').value, torch: $('ltorch').value }));
+    undoStack.push(JSON.stringify({ rows: rowsOf(), name: $('lname').value, torch: $('ltorch').value, guards: [...guardPlans] }));
     if (undoStack.length > 40) undoStack.shift();
     $('undo').disabled = false;
   }
@@ -300,7 +383,7 @@ dialog input { width: 100%; }
     const s = undoStack.pop();
     if (!s) return;
     const o = JSON.parse(s);
-    setRows(o.rows, false); $('lname').value = o.name; $('ltorch').value = o.torch;
+    setRows(o.rows, false); $('lname').value = o.name; $('ltorch').value = o.torch; if (o.guards) guardPlans = new Map(o.guards); guardUi();
     $('undo').disabled = !undoStack.length;
     changed();
   }
@@ -317,7 +400,7 @@ dialog input { width: 100%; }
     const lvTmp = Maze.parseLevel(Maze.serialize({ name: 'x', torch: 1, par: 1, rows: rowsOf() }));
     const par = $('lparAuto').checked ? (lvTmp.shortest ?? null) : (parseInt($('lpar').value, 10) || null);
     const sp = parseFloat(String($('lspeed').value).replace(',', '.'));
-    return Maze.serialize({ name: $('lname').value.trim() || null, torch: parseInt($('ltorch').value, 10) || 3, par, speed: Number.isFinite(sp) ? sp : null, extra: extraHeader, rows: rowsOf() });
+    return Maze.serialize({ name: $('lname').value.trim() || null, torch: parseInt($('ltorch').value, 10) || 3, par, speed: Number.isFinite(sp) ? sp : null, extra: allExtra(), rows: rowsOf() });
   }
 
   let pending = null;
@@ -327,6 +410,7 @@ dialog input { width: 100%; }
     pending = setTimeout(validate, 120);
   }
 
+  const MAX_SIDE = 71;              // the levels of Lanterna are at most 71 × 71 (Dave, 11/10)
   function validate() {
     const text = currentText();
     firstRowLine = text.split('\n').indexOf('---') + 2;
@@ -341,6 +425,7 @@ dialog input { width: 100%; }
     const borderOpen = grid.some((r, y) => r.some((c, x) => (x === 0 || y === 0 || x === W - 1 || y === H - 1) && c !== '#'));
     (parsed.warnings || []).forEach(e => items.push(['bad', '!', (e.line ? `Riga ${e.line}: ` : '') + e.msg]));
     if (borderOpen) items.push(['bad', '!', 'Il bordo esterno ha dei buchi. Il gioco li tratta come muro, ma è meglio chiuderli.']);
+    if (W > MAX_SIDE || H > MAX_SIDE) items.push(['bad', '!', `Il labirinto è ${W} × ${H}: i livelli di Lanterna sono al massimo ${MAX_SIDE} × ${MAX_SIDE}.`]);
     $('checks').innerHTML = items.map(([c, i, t]) => `<li class="${c}"><span>${i}</span><span></span></li>`).join('');
     [...$('checks').children].forEach((li, i) => li.lastChild.textContent = items[i][2]);
     const fmt = n => n == null ? '–' : n.toLocaleString('it-IT');
@@ -353,20 +438,129 @@ dialog input { width: 100%; }
       ['Gemme', fmt(parsed.gems)],
       ['Ombre', fmt(st.enemies) + (st.enemies ? ` · ${String(parsed.speed).replace('.', ',')} s/casella` : '')],
       ['Falò', fmt(st.fires)],
+      ...(parsed.guards && parsed.guards.length ? [['Guardie', fmt(parsed.guards.length) + (guardPlans.size ? ` · ${[...guardPlans.keys()].filter(k => { const [x, y] = k.split(',').map(Number); return grid[y] && grid[y][x] === 'U'; }).length} con movimento scelto` : '')]] : []),
     ].map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join('');
-    $('text').value = text;
+    $('text').value = text; cryptUi(false);
     $('stSize').textContent = `${W} × ${H}`;
-    store.set('draft', { extra: extraHeader, rows: rowsOf(), name: $('lname').value, torch: $('ltorch').value, speed: $('lspeed').value, parAuto: $('lparAuto').checked, par: $('lpar').value, fname: $('fname').value });
+    store.set('draft', { extra: allExtra(), rows: rowsOf(), name: $('lname').value, torch: $('ltorch').value, speed: $('lspeed').value, parAuto: $('lparAuto').checked, par: $('lpar').value, fname: $('fname').value });
     draw();
   }
 
   let extraHeader = [];   // tip / flash lines of the loaded file, written back unchanged
+  /* ---------- guards (Atto III): how each one moves, written as "guard:" lines in the header ---------- */
+  let guardPlans = new Map();      // "x,y" → { mode: 'route'|'loop'|'post', pts: [{x,y}], turn }  (no entry = automatic)
+  let selGuard = null;             // the guard being edited ({x,y})
+  const gkey = (x, y) => x + ',' + y;
+  /* ---------- crypts: waves of Ombre and Cacciatrici, the Guardian's hits, the prize of a secret crypt ("waves:", "guardian:", "crypt: bonus", "reward:") ---------- */
+  const CRYPT_DEF = { guardian: [{ n: 3, h: 0 }, { n: 3, h: 1 }], bonus: [{ n: 3, h: 0 }] };
+  let crypt = { type: 'guardian', waves: CRYPT_DEF.guardian.map(w => ({ ...w })), hp: 3, reward: 3 };
+  const clampI = (v, lo, hi, d) => { const n = parseInt(v, 10); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : d; };
+  const hasCrypt = () => grid.some(r => r.includes('R'));
+  function cryptFromLines(found) {
+    const type = /^bonus$/i.test((found.crypt || '').trim()) ? 'bonus' : 'guardian';
+    const waves = found.waves ? found.waves.split(',').map(t => t.trim()).filter(Boolean).map(t => { const [n, h] = t.split('+'); return { n: clampI(n, 0, 9, 0), h: clampI(h, 0, 4, 0) }; }) : CRYPT_DEF[type].map(w => ({ ...w }));
+    crypt = { type, waves: waves.length ? waves : CRYPT_DEF[type].map(w => ({ ...w })), hp: clampI(found.guardian, 1, 9, 3), reward: clampI(found.reward, 1, 9, 3) };
+  }
+  function cryptLines() {
+    if (!hasCrypt()) return [];
+    const out = [];
+    if (crypt.type === 'bonus') out.push('crypt: bonus');
+    out.push('waves: ' + crypt.waves.map(w => w.h ? `${w.n}+${w.h}` : `${w.n}`).join(', '));
+    out.push(crypt.type === 'bonus' ? `reward: ${crypt.reward}` : `guardian: ${crypt.hp}`);
+    return out;
+  }
+  function cryptUi(full) {
+    const on = hasCrypt(), g = crypt.type === 'guardian';
+    $('cryptNote').textContent = on
+      ? (g ? 'Il livello è una cripta col Guardiano: entrando le porte si chiudono, partono le ondate e alla fine sorge il Guardiano, che lascia la chiave dell\'uscita. ' : 'Cripta segreta: chi entra affronta le ondate e vince il premio; il livello si può finire anche senza. ') + 'Ogni stanza separata è una cripta a sé, con le stesse impostazioni.'
+      : 'Disegna la sala con lo strumento Cripta (R), una Porta cripta (G) e almeno una Tomba (T): queste impostazioni valgono solo se nel labirinto c\'è una cripta.';
+    $('chpL').hidden = !g; $('crewardL').hidden = g;
+    if (!full) return;
+    $('ctype').value = crypt.type; $('chp').value = crypt.hp; $('creward').value = crypt.reward;
+    const box = $('cwaves'); box.innerHTML = '';
+    crypt.waves.forEach((w, i) => {
+      const row = document.createElement('div'); row.className = 'wave';
+      row.innerHTML = `<span class="wn">${i + 1}ª</span><label>Ombre<input type="number" min="0" max="9" step="1" value="${w.n}"></label><label>Cacciatrici<input type="number" min="0" max="4" step="1" value="${w.h}"></label><button type="button" title="Togli questa ondata" aria-label="Togli l'ondata ${i + 1}">✕</button>`;
+      const [ni, hi] = row.querySelectorAll('input');
+      ni.addEventListener('input', () => { w.n = clampI(ni.value, 0, 9, 0); changed(); });
+      hi.addEventListener('input', () => { w.h = clampI(hi.value, 0, 4, 0); changed(); });
+      const del = row.querySelector('button'); del.disabled = crypt.waves.length <= 1;
+      del.addEventListener('click', () => { crypt.waves.splice(i, 1); cryptUi(true); changed(); });
+      box.appendChild(row);
+    });
+    $('cwaveAdd').disabled = crypt.waves.length >= 6;
+  }
+  function setExtra(lines) {
+    extraHeader = []; guardPlans = new Map(); $('ldrain').value = '';
+    const found = {};
+    for (const l of lines || []) {
+      const cm = /^(crypt|waves|guardian|reward)\s*:\s*(.*)$/i.exec(l); if (cm) { found[cm[1].toLowerCase()] = cm[2]; continue; }
+      const dm = /^drain\s*:\s*(.*)$/i.exec(l); if (dm) { $('ldrain').value = dm[1].trim(); continue; }
+      if (/^guard\s*:/i.test(l)) {
+        const p = Maze.guardPlan(l.replace(/^guard\s*:/i, ''));
+        if (!p.error && p.mode !== 'auto') { guardPlans.set(gkey(p.x, p.y), { mode: p.mode, pts: p.pts, turn: p.turn }); continue; }
+        if (!p.error) continue;
+      }
+      extraHeader.push(l);
+    }
+    cryptFromLines(found); cryptUi(true);
+  }
+  function allExtra() {
+    const out = extraHeader.slice();
+    out.push(...cryptLines());
+    const dr = parseFloat(String($('ldrain').value).replace(',', '.')); if (Number.isFinite(dr) && dr > 0) out.push(`drain: ${dr}`);
+    for (const [k, p] of guardPlans) {
+      const [x, y] = k.split(',').map(Number);
+      if (!grid[y] || grid[y][x] !== 'U') continue;             // the guard was erased: its line goes too
+      const l = Maze.guardLine({ x, y, ...p }); if (l) out.push(l);
+    }
+    return out;
+  }
+  const GUARD_HELP = {
+    auto: 'Fa avanti e indietro nel corridoio dritto più lungo che passa dalla sua casella.',
+    route: 'Clicca sulle caselle, in ordine, per aggiungere le tappe: la guardia va dalla prima all\'ultima e poi torna indietro, sempre per la strada più breve.',
+    loop: 'Clicca sulle caselle, in ordine, per aggiungere le tappe: dopo l\'ultima la guardia torna da dove è partita e ricomincia il giro.',
+    post: 'Resta ferma al suo posto e ogni tanto si gira verso la prossima direzione libera, in senso orario.',
+  };
+  function guardUi() {
+    const box = $('guardBox');
+    if (tool !== 'U' || !selGuard || !grid[selGuard.y] || grid[selGuard.y][selGuard.x] !== 'U') { box.hidden = true; return; }
+    const p = guardPlans.get(gkey(selGuard.x, selGuard.y)) || { mode: 'auto', pts: [], turn: 2.5 };
+    const stops = p.mode === 'route' || p.mode === 'loop';
+    box.hidden = false;
+    $('guardWhere').textContent = `Guardia in colonna ${selGuard.x + 1}, riga ${selGuard.y + 1}`;
+    $('guardMode').value = p.mode;
+    $('guardHelp').textContent = GUARD_HELP[p.mode] + (stops ? ` Tappe: ${p.pts.length}.` : '') + ' Premi Fine (o Esc) per mettere un\'altra guardia.';
+    $('guardStops').hidden = !stops; $('guardTurnL').hidden = p.mode !== 'post';
+    $('guardTurn').value = p.turn;
+    $('guardUndoPt').disabled = !p.pts.length; $('guardClearPts').disabled = !p.pts.length;
+  }
+  function guardPlanSel(create) {
+    if (!selGuard) return null;
+    const k = gkey(selGuard.x, selGuard.y);
+    if (!guardPlans.has(k) && create) guardPlans.set(k, { mode: 'auto', pts: [], turn: 2.5 });
+    return guardPlans.get(k) || null;
+  }
+  // a click with the Guard tool: on a guard = select it; with a guard "a tappe" selected = add a stop; elsewhere = new guard
+  function guardClick(p) {
+    if (!p) return;
+    const c = grid[p.y][p.x];
+    if (c === 'U') { selGuard = { x: p.x, y: p.y }; guardUi(); draw(); return; }
+    const plan = guardPlanSel(false);
+    if (plan && (plan.mode === 'route' || plan.mode === 'loop')) {
+      if (c === '#' || c === 'C') { toast('Le tappe vanno sul pavimento, non sui muri.'); return; }
+      pushUndo(); plan.pts.push({ x: p.x, y: p.y }); guardUi(); changed(); return;
+    }
+    pushUndo();
+    grid[p.y][p.x] = 'U'; guardPlans.delete(gkey(p.x, p.y));
+    selGuard = { x: p.x, y: p.y }; guardUi(); changed();
+  }
   function loadText(text) {
     const lv = Maze.parseLevel(text);
     if (!lv.rows.length) { toast('Il testo non contiene un labirinto.'); return; }
     pushUndo();
     setRows(lv.rows);
-    extraHeader = lv.extraLines || [];
+    setExtra(lv.extraLines); selGuard = null; guardUi();
     $('lname').value = lv.meta.name || '';
     $('ltorch').value = lv.meta.torch || 3;
     $('lspeed').value = lv.meta.speed || '';
@@ -401,7 +595,7 @@ dialog input { width: 100%; }
   }
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   let colors = {};
-  function readColors() { colors = { '#': css('--c-wall'), '.': css('--c-floor'), S: css('--c-start'), E: css('--c-exit'), '*': css('--c-gem'), M: css('--c-enemy'), F: css('--c-fire'), K: css('--c-key'), H: css('--c-hunter'), V: css('--c-fireball'), L: css('--c-lure'), C: css('--c-crystal'), R: css('--c-crypt'), G: css('--c-gate'), B: css('--c-brazier'), T: css('--c-tomb'), X: css('--c-altar'), W: css('--c-whisper'), path: css('--c-path'), bg: css('--canvas'), line: css('--line') }; }
+  function readColors() { colors = { '#': css('--c-wall'), '.': css('--c-floor'), S: css('--c-start'), E: css('--c-exit'), '*': css('--c-gem'), M: css('--c-enemy'), F: css('--c-fire'), K: css('--c-key'), H: css('--c-hunter'), U: css('--c-guard'), I: css('--c-lamp'), '/': css('--c-mirror'), '\\': css('--c-mirror'), Q: css('--c-door'), V: css('--c-fireball'), L: css('--c-lure'), C: css('--c-crystal'), R: css('--c-crypt'), G: css('--c-gate'), B: css('--c-brazier'), T: css('--c-tomb'), X: css('--c-altar'), W: css('--c-whisper'), path: css('--c-path'), bg: css('--canvas'), line: css('--line') }; }
   readColors();
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); draw(); });
   new MutationObserver(() => { readColors(); draw(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -413,6 +607,33 @@ dialog input { width: 100%; }
   tilesImg.src = 'tiles.png';
   $('showTiles').addEventListener('change', draw);
   $('toolListen').addEventListener('click', () => whisper(tool));
+  $('guardMode').addEventListener('change', () => {
+    if (!selGuard) return;
+    pushUndo();
+    const m = $('guardMode').value;
+    if (m === 'auto') guardPlans.delete(gkey(selGuard.x, selGuard.y));
+    else { const p = guardPlanSel(true); p.mode = m; if (m === 'post') p.pts = []; }
+    guardUi(); changed();
+  });
+  $('guardTurn').addEventListener('change', () => {
+    const p = guardPlanSel(false); if (!p) return;
+    const t = parseFloat(String($('guardTurn').value).replace(',', '.'));
+    p.turn = Number.isFinite(t) ? Math.max(1, Math.min(10, t)) : 2.5; guardUi(); changed();
+  });
+  $('guardUndoPt').addEventListener('click', () => { const p = guardPlanSel(false); if (!p || !p.pts.length) return; pushUndo(); p.pts.pop(); guardUi(); changed(); });
+  $('guardClearPts').addEventListener('click', () => { const p = guardPlanSel(false); if (!p || !p.pts.length) return; pushUndo(); p.pts = []; guardUi(); changed(); });
+  $('guardDone').addEventListener('click', () => { selGuard = null; guardUi(); draw(); });
+  $('guardDel').addEventListener('click', () => {
+    if (!selGuard) return;
+    pushUndo(); grid[selGuard.y][selGuard.x] = '.'; guardPlans.delete(gkey(selGuard.x, selGuard.y)); selGuard = null; guardUi(); changed();
+  });
+  document.querySelectorAll('.sw-mk').forEach(sw => {                // Atto III tools: a small drawing of the cell
+    const c = document.createElement('canvas'), k = 24, d = window.devicePixelRatio || 1; c.width = c.height = k * d; c.style.width = c.style.height = k + 'px';
+    sw.appendChild(c); sw.style.background = 'none'; sw.style.display = 'grid';
+    const x = c.getContext('2d'); x.scale(d, d);
+    readColors(); const m = sw.dataset.mk;
+    x.fillStyle = m === '/' || m === '\\' ? colors['.'] : colors['#']; x.fillRect(0, 0, k, k); drawAct3Mark(m, 0, 0, k, x, 0, 0);
+  });
   document.querySelectorAll('.tool[data-t] .sw').forEach(sw => {   // tool buttons show the real tile
     const i = TILE_ORDER.indexOf(sw.closest('.tool').dataset.t);
     if (i >= 0) { sw.classList.add('tile'); sw.style.background = `url(tiles.png) ${i / (TILE_ORDER.length - 1) * 100}% 0 / ${TILE_ORDER.length * 100}% 100% no-repeat`; }
@@ -420,6 +641,83 @@ dialog input { width: 100%; }
   const useTiles = () => tilesReady && $('showTiles').checked && zoom >= 10;
   // sound effect cell: invisible in the game, marked here with violet sound waves
   const SOUND = Maze.SOUND_CELLS;   // W Z P A D N
+  // the way a guard walks: dashed line through its stops (numbered), the corridor of an automatic one, the turning sentry
+  function guardWalk(lvT, a, b) {
+    const dist = Maze.bfs(lvT, b), out = [a];
+    let { x, y } = a;
+    if (dist[y * W + x] < 0) return [a, b];
+    while (!(x === b.x && y === b.y)) {
+      const n = Maze.DIRS.map(([dx, dy]) => ({ x: x + dx, y: y + dy })).find(q => q.x >= 0 && q.y >= 0 && q.x < W && q.y < H && dist[q.y * W + q.x] === dist[y * W + x] - 1);
+      if (!n) break; x = n.x; y = n.y; out.push(n);
+    }
+    return out;
+  }
+  function drawGuardPlans(z) {
+    if (!W) return;
+    const guards = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (grid[y][x] === 'U') guards.push({ x, y });
+    if (!guards.length) return;
+    const lvT = { w: W, h: H, rows: rowsOf() }, c = q => [panX + (q.x + 0.5) * z, panY + (q.y + 0.5) * z];
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const g of guards) {
+      const sel = selGuard && selGuard.x === g.x && selGuard.y === g.y;
+      const p = guardPlans.get(gkey(g.x, g.y));
+      ctx.globalAlpha = sel ? 0.95 : 0.5;
+      ctx.strokeStyle = colors.U; ctx.fillStyle = colors.U; ctx.lineWidth = Math.max(1.5, z * 0.12);
+      if (p && (p.mode === 'route' || p.mode === 'loop')) {
+        const stops = [g, ...p.pts]; if (p.mode === 'loop' && p.pts.length) stops.push(g);
+        ctx.setLineDash([Math.max(3, z * 0.3), Math.max(3, z * 0.25)]);
+        ctx.beginPath();
+        for (let i = 1; i < stops.length; i++) guardWalk(lvT, stops[i - 1], stops[i]).forEach((q, j) => { const [sx, sy] = c(q); if (i === 1 && j === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy); });
+        ctx.stroke(); ctx.setLineDash([]);
+        p.pts.forEach((q, i) => {
+          const [sx, sy] = c(q), r = Math.max(4, z * 0.3);
+          ctx.globalAlpha = sel ? 1 : 0.6; ctx.fillStyle = colors.U; ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
+          if (z >= 10) { ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(r * 1.1)}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), sx, sy + 0.5); }
+        });
+      } else if (p && p.mode === 'post') {
+        const [sx, sy] = c(g), r = z * 0.62;
+        ctx.beginPath(); ctx.arc(sx, sy, r, -0.3, Math.PI * 1.4); ctx.stroke();
+        const a = Math.PI * 1.4; ctx.beginPath(); ctx.moveTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r);
+        ctx.lineTo(sx + Math.cos(a) * r + z * 0.18, sy + Math.sin(a) * r - z * 0.02); ctx.lineTo(sx + Math.cos(a) * r + z * 0.02, sy + Math.sin(a) * r + z * 0.18); ctx.closePath(); ctx.fill();
+      } else if (sel) {                                   // automatic: the corridor it will walk
+        const run = (dx, dy) => { let n = 0; while (n < 60 && Maze.isOpen(lvT, g.x + dx * (n + 1), g.y + dy * (n + 1))) n++; return n; };
+        const r = run(1, 0), l = run(-1, 0), d = run(0, 1), u = run(0, -1), hor = r + l >= d + u;
+        const a = hor ? { x: g.x - l, y: g.y } : { x: g.x, y: g.y - u }, b = hor ? { x: g.x + r, y: g.y } : { x: g.x, y: g.y + d };
+        ctx.setLineDash([Math.max(3, z * 0.3), Math.max(3, z * 0.25)]);
+        ctx.beginPath(); ctx.moveTo(...c(a)); ctx.lineTo(...c(b)); ctx.stroke(); ctx.setLineDash([]);
+      }
+      if (sel) { ctx.globalAlpha = 1; ctx.strokeStyle = colors.S || '#fff'; ctx.lineWidth = 2; ctx.strokeRect(panX + g.x * z + 1, panY + g.y * z + 1, z - 2, z - 2); }
+    }
+    ctx.restore();
+  }
+  // Atto III cells (not in the tile set): street lamp, mirrors, door of the Comune
+  const ACT3_MK = 'I/\\Q';
+  function drawAct3Mark(c, x, y, z, g = ctx, sx0, sy0) {
+    const sx = sx0 ?? panX + x * z, sy = sy0 ?? panY + y * z, cx = sx + z / 2, cy = sy + z / 2;
+    if (c === 'I') {
+      if (sx0 == null && useTiles()) { g.fillStyle = colors['#']; g.fillRect(sx, sy, z + 0.5, z + 0.5); }
+      g.fillStyle = '#1A1C22'; g.fillRect(cx - z * 0.05, cy - z * 0.1, z * 0.1, z * 0.45);
+      g.fillStyle = colors.I; g.fillRect(cx - z * 0.14, cy - z * 0.38, z * 0.28, z * 0.26);
+    } else if (c === 'Q') {
+      if (sx0 == null && useTiles()) { g.fillStyle = colors['#']; g.fillRect(sx, sy, z + 0.5, z + 0.5); }
+      g.fillStyle = colors.Q; g.fillRect(sx + z * 0.1, sy + z * 0.06, z * 0.8, z * 0.88);
+      g.fillStyle = '#FFC857'; g.beginPath(); g.arc(cx, cy, Math.max(1, z * 0.1), 0, Math.PI * 2); g.fill();
+    } else {
+      const m = z * 0.15, a = c === '/' ? [sx + z - m, sy + m, sx + m, sy + z - m] : [sx + m, sy + m, sx + z - m, sy + z - m];
+      g.strokeStyle = colors['/']; g.lineWidth = Math.max(1.5, z * 0.14); g.lineCap = 'round';
+      g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(a[2], a[3]); g.stroke();
+    }
+  }
+  // guard of the Comune: a blue figure with a cap and a small lantern (the tile set has no guard)
+  function drawGuardMark(x, y, z) {
+    const cx = panX + (x + 0.5) * z, cy = panY + (y + 0.5) * z, r = Math.max(1.5, z * 0.38);
+    ctx.fillStyle = colors.U; ctx.beginPath(); ctx.arc(cx, cy + r * 0.15, r, 0, Math.PI * 2); ctx.fill();
+    if (z < 8) return;
+    ctx.fillStyle = '#E9C9A6'; ctx.beginPath(); ctx.arc(cx, cy - r * 0.25, r * 0.42, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1B2336'; ctx.fillRect(cx - r * 0.5, cy - r * 0.78, r, r * 0.3);
+    ctx.fillStyle = '#FFC857'; ctx.beginPath(); ctx.arc(cx + r * 0.75, cy + r * 0.45, r * 0.22, 0, Math.PI * 2); ctx.fill();
+  }
   function drawWhisperMark(x, y, z, c) {
     const cx = panX + (x + 0.5) * z, cy = panY + (y + 0.5) * z;
     ctx.strokeStyle = colors.W; ctx.lineWidth = Math.max(1, z * 0.07); ctx.lineCap = 'round';
@@ -444,12 +742,16 @@ dialog input { width: 100%; }
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const c = grid[y][x];
       if (tiles) {
-        const i = SOUND.includes(c) ? 1 : Math.max(0, TILE_ORDER.indexOf(c));
+        const i = (SOUND.includes(c) || c === 'U' || c === '/' || c === '\\') ? 1 : Math.max(0, TILE_ORDER.indexOf(c));
         ctx.drawImage(tilesImg, i * TILE_PX, 0, TILE_PX, TILE_PX, panX + x * z, panY + y * z, z + 0.5, z + 0.5);
         if (SOUND.includes(c)) drawWhisperMark(x, y, z, c);
+        if (c === 'U') drawGuardMark(x, y, z);
+        if (ACT3_MK.includes(c)) drawAct3Mark(c, x, y, z);
         continue;
       }
       if (SOUND.includes(c)) { ctx.fillStyle = colors['.']; ctx.fillRect(panX + x * z, panY + y * z, z + pad, z + pad); drawWhisperMark(x, y, z, c); continue; }
+      if (c === 'U') { ctx.fillStyle = colors['.']; ctx.fillRect(panX + x * z, panY + y * z, z + pad, z + pad); drawGuardMark(x, y, z); continue; }
+      if (ACT3_MK.includes(c)) { ctx.fillStyle = c === '/' || c === '\\' ? colors['.'] : colors['#']; ctx.fillRect(panX + x * z, panY + y * z, z + pad, z + pad); drawAct3Mark(c, x, y, z); continue; }
       ctx.fillStyle = colors[c] || colors['.'];
       if (c === '*' || c === 'M' || c === 'F' || c === 'K' || c === 'H' || c === 'V' || c === 'L') { ctx.fillStyle = colors['.']; }
       ctx.fillRect(panX + x * z, panY + y * z, z + pad, z + pad);
@@ -495,6 +797,7 @@ dialog input { width: 100%; }
       ctx.strokeStyle = colors[k]; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(panX + (p.x + 0.5) * z, panY + (p.y + 0.5) * z, 7, 0, Math.PI * 2); ctx.stroke();
     });
+    drawGuardPlans(z);
     $('stZoom').textContent = `zoom ${Math.round(zoom * 10) / 10} px/casella`;
   }
 
@@ -508,7 +811,8 @@ dialog input { width: 100%; }
     if (!p) return false;
     const cur = grid[p.y][p.x];
     let v = tool;
-    if (('*MFKHVL' + SOUND).includes(tool) && first && cur === tool) v = '.';
+    if (('*MFKHVLU' + SOUND).includes(tool) && first && cur === tool) v = '.';
+    if ((tool === '/' || tool === '\\') && first && (cur === '/' || cur === '\\')) v = cur === '/' ? '\\' : '/';   // a click on a mirror turns it
     if (cur === v) return false;
     if (tool === 'S' || tool === 'E' || tool === 'K') {      // only one start, one exit, one key
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (grid[y][x] === tool) grid[y][x] = '.';
@@ -532,6 +836,7 @@ dialog input { width: 100%; }
     }
     last = { x: e.clientX, y: e.clientY };
     if (tool === 'pan' || spaceDown || e.button === 1 || e.button === 2) { mode = 'pan'; cv.style.cursor = 'grabbing'; return; }
+    if (tool === 'U') { mode = null; guardClick(cellFromEvent(e)); return; }
     mode = 'paint'; dirty = false;
     pushUndo();
     if (paintCell(cellFromEvent(e), true)) { dirty = true; draw(); }
@@ -571,7 +876,12 @@ dialog input { width: 100%; }
   }, { passive: false });
 
   // what each tool does (shown under the buttons for the chosen tool, and while hovering a button)
-  const TOOL_INFO = {"pan": ["Sposta", "Trascina per muovere la vista. Anche: barra spaziatrice + trascina, tasto destro o due dita."], "#": ["Muro", "Blocca il passaggio e la luce. Il labirinto deve essere chiuso da muri tutto intorno."], ".": ["Pavimento", "Casella libera dove si cammina. Cliccando su un oggetto con lo stesso strumento lo togli."], "S": ["Partenza", "Dove inizia Scintilla. Una sola per livello: se ne metti un'altra, la vecchia sparisce. Non è un punto di salvataggio."], "E": ["Uscita", "Il livello finisce qui. Una sola per livello. Se c'è una chiave, l'uscita resta chiusa finché non la prendi. Le caselle attorno sono visibili fin dall'inizio."], "M": ["Ombra", "Nemico base: dorme finché la luce della lanterna non la raggiunge, poi ti insegue. Al buio ti perde e si ferma. Si libera con un colpo di luce: lampo, falò, fiamma viva o lucciole. Velocità: riga speed: (0,7 s/casella). Con roam: N le Ombre addormentate vagano piano attorno al nido."], "H": ["Cacciatrice", "Ombra veloce (0,6 s/casella): una volta sveglia ti segue sempre, anche al buio, ma al buio non può prenderti. Per liberarla servono 2 colpi di luce. Consigliata dal livello 5 in poi."], "X": ["Guardiano", "Il boss delle cripte: sorge da qui dopo l'ultima ondata. Solo nelle cripte col Guardiano (non in quelle segrete). Colpi per liberarlo: riga guardian: (es. 3). Quando lo liberi lascia la chiave dell'uscita: non mettere la K nel disegno. Evita i bracieri accesi e fa uno scatto se ti vede in linea retta."], "*": ["Gemma", "Ogni gemma vale un lampo in più per il livello. Conta anche per le stelle e il punteggio. La falena (compagno) indica quelle vicine."], "K": ["Chiave", "Facoltativa, al massimo una. Se c'è, l'uscita resta chiusa finché Scintilla non la raccoglie; il percorso più breve diventa partenza → chiave → uscita."], "V": ["Fiamma viva", "Oggetto da raccogliere: finisce nello zaino (max 5). Si lancia dove guardi: vola 5 caselle, illumina e brucia per 15 s liberando le Ombre che ci passano. Ottima in un corridoio dritto."], "L": ["Barattolo di lucciole", "Oggetto da raccogliere: finisce nello zaino (max 5). Posato a terra incanta le Ombre vicine per 15 s, poi esplode e le colpisce. Utile per svuotare una sala piena di Ombre."], "F": ["Falò", "Si accende passandoci sopra e diventa il punto da cui ripartire se ti prendono. Acceso, colpisce le Ombre che ci passano sopra o accanto. Alla prima accensione si legge una pagina del diario (se il livello ha diary:)."], "C": ["Cristallo", "Blocca il passaggio come un muro. Quando la luce della lanterna lo tocca si accende per sempre e illumina le caselle entro 2 di distanza, anche a lanterna spenta. Le Ombre addormentate in quella luce aprono gli occhi e ti inseguono appena ti vedono; le cacciatrici si svegliano subito."], "R": ["Pavimento della cripta", "Le caselle della sala. Entrando le porte si chiudono e partono le ondate (riga waves:, es. 3 oppure 3, 3+1 = Ombre + cacciatrici). Con crypt: bonus è una cripta segreta facoltativa: niente Guardiano, premio reward: lampi + un oggetto. Ogni stanza separata è una cripta a sé."], "G": ["Porta della cripta", "L'ingresso della sala: si chiude quando entri e si riapre quando la cripta è vinta. Ogni cripta ne vuole almeno una."], "B": ["Braciere", "Si accende passandoci sopra durante la lotta e colpisce le Ombre che passano accanto. Contro il Guardiano: lo colpisce una volta e poi si spegne."], "T": ["Tomba", "Da qui escono le Ombre delle ondate. Ogni cripta ne vuole almeno una (meglio due o più, distanti)."]};
+  const TOOL_INFO = {"pan": ["Sposta", "Trascina per muovere la vista. Anche: barra spaziatrice + trascina, tasto destro o due dita."], "#": ["Muro", "Blocca il passaggio e la luce. Il labirinto deve essere chiuso da muri tutto intorno."], ".": ["Pavimento", "Casella libera dove si cammina. Cliccando su un oggetto con lo stesso strumento lo togli."], "S": ["Partenza", "Dove inizia Scintilla. Una sola per livello: se ne metti un'altra, la vecchia sparisce. Non è un punto di salvataggio."], "E": ["Uscita", "Il livello finisce qui. Una sola per livello. Se c'è una chiave, l'uscita resta chiusa finché non la prendi. Le caselle attorno sono visibili fin dall'inizio."], "M": ["Ombra", "Nemico base: dorme finché la luce della lanterna non la raggiunge, poi ti insegue. Al buio ti perde e si ferma. Si libera con un colpo di luce: lampo, falò, fiamma viva o lucciole. Velocità: riga speed: (0,7 s/casella). Con roam: N le Ombre addormentate vagano piano attorno al nido."], "H": ["Cacciatrice", "Ombra veloce (0,6 s/casella): una volta sveglia ti segue sempre, anche al buio, ma al buio non può prenderti. Per liberarla servono 2 colpi di luce. Consigliata dal livello 5 in poi."], "X": ["Guardiano", "Il boss delle cripte: sorge da qui dopo l'ultima ondata. Solo nelle cripte col Guardiano (non in quelle segrete). Colpi per liberarlo: riquadro Cripte. Quando lo liberi lascia la chiave dell'uscita: non mettere la K nel disegno. Evita i bracieri accesi e fa uno scatto se ti vede in linea retta."], "*": ["Gemma", "Ogni gemma vale un lampo in più per il livello. Conta anche per le stelle e il punteggio. La falena (compagno) indica quelle vicine."], "K": ["Chiave", "Facoltativa, al massimo una. Se c'è, l'uscita resta chiusa finché Scintilla non la raccoglie; il percorso più breve diventa partenza → chiave → uscita."], "V": ["Fiamma viva", "Oggetto da raccogliere: finisce nello zaino (max 5). Si lancia dove guardi: vola 5 caselle, illumina e brucia per 15 s liberando le Ombre che ci passano. Ottima in un corridoio dritto."], "L": ["Barattolo di lucciole", "Oggetto da raccogliere: finisce nello zaino (max 5). Posato a terra incanta le Ombre vicine per 15 s, poi esplode e le colpisce. Utile per svuotare una sala piena di Ombre."], "F": ["Falò", "Si accende passandoci sopra e diventa il punto da cui ripartire se ti prendono. Acceso, colpisce le Ombre che ci passano sopra o accanto. Alla prima accensione si legge una pagina del diario (se il livello ha diary:)."], "C": ["Cristallo", "Blocca il passaggio come un muro. Quando la luce della lanterna lo tocca si accende per sempre e illumina le caselle entro 2 di distanza, anche a lanterna spenta. Le Ombre addormentate in quella luce aprono gli occhi e ti inseguono appena ti vedono; le cacciatrici si svegliano subito."], "R": ["Pavimento della cripta", "Le caselle della sala. Entrando le porte si chiudono e partono le ondate di Ombre e cacciatrici. Tipo di cripta (col Guardiano o segreta), ondate, colpi del Guardiano e premio si scelgono nel riquadro Cripte. Ogni stanza separata è una cripta a sé."], "G": ["Porta della cripta", "L'ingresso della sala: si chiude quando entri e si riapre quando la cripta è vinta. Ogni cripta ne vuole almeno una."], "B": ["Braciere", "Si accende passandoci sopra durante la lotta e colpisce le Ombre che passano accanto. Contro il Guardiano: lo colpisce una volta e poi si spegne."], "T": ["Tomba", "Da qui escono le Ombre delle ondate. Ogni cripta ne vuole almeno una (meglio due o più, distanti)."]};
+  TOOL_INFO.U = ['Guardia del Comune (Atto III)', "Una persona, non un'Ombra: fa avanti e indietro nel corridoio più lungo che passa da qui, con una lanterna sempre visibile. Ti vede se hai la lanterna accesa davanti a lei entro 8 caselle (3 alle spalle); a lanterna spenta solo se le passi a 2 caselle. Se ti vede ti insegue; se ti prende perdi una vita. Clicca su una guardia per scegliere come si muove: automatico, avanti e indietro tra tappe, giro chiuso o sentinella. Il lampo non la libera ma la acceca per 4 s; un secondo lampo mentre è accecata la addormenta per il resto del livello (si risveglia se qualcosa ti prende). Colpita dalla fiamma viva lascia la lanterna e scappa via per sempre. Le lucciole la attirano. Mettila in corridoi dritti di almeno 7 caselle."];
+  TOOL_INFO.I = ['Lampione (Atto III)', "Sta nel muro, accanto a un corridoio. Si accende quando Scintilla ci passa accanto (anche in diagonale) e illumina 3 caselle per sempre. Le Ombre non entrano nella sua luce (posto sicuro) e quelle che ci si trovano dentro quando si accende vengono liberate. Accenderli tutti nel livello regala un lampo. Nei livelli con la luce che si consuma, la sua luce ricarica la lanterna."];
+  TOOL_INFO['/'] = ['Specchio ╱ (Atto III)', "Non si cammina sopra. Se la lanterna lo illumina in linea retta, il raggio gira di 90° e prosegue fino a un muro: accende i cristalli, apre le porte del Comune (Q) e passa da uno specchio all'altro. Nel gioco Scintilla lo può girare con il pulsante Ruota quando gli è accanto. Un lampo viaggia lungo il raggio e libera le Ombre. Clic su uno specchio con questo strumento: lo giri."];
+  TOOL_INFO['\\'] = ['Specchio ╲ (Atto III)', TOOL_INFO['/'][1]];
+  TOOL_INFO.Q = ['Porta del Comune (Atto III)', "Chiusa come un muro: si apre per sempre solo quando la colpisce il raggio di uno specchio. Per il controllo del livello conta come aperta: assicurati che si possa davvero aprire con gli specchi."];
   const SOUND_NOTE = ' Casella invisibile nel gioco (si cammina come pavimento): il suono parte quando Scintilla ci passa sopra o accanto, una sola volta per livello. Mettilo prima di un nido di Ombre, in un vicolo cieco o vicino a una cripta segreta.';
   for (const [k, [name, desc]] of Object.entries(Whispers.KINDS)) TOOL_INFO[k] = [name + ' (effetto sonoro)', desc + SOUND_NOTE];
   function showToolInfo(t) { const i = TOOL_INFO[t]; if (!i) return; $('toolInfoName').textContent = i[0]; $('toolInfoTxt').textContent = i[1]; $('toolListen').hidden = !SOUND.includes(t); }
@@ -592,7 +902,7 @@ dialog input { width: 100%; }
     b.addEventListener('focus', () => showToolInfo(b.dataset.t));
   });
   function setTool(t) {
-    tool = t; showToolInfo(t);
+    tool = t; showToolInfo(t); guardUi(); draw();
     document.querySelectorAll('.tool').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
     cv.style.cursor = t === 'pan' ? 'grab' : 'crosshair';
   }
@@ -603,8 +913,9 @@ dialog input { width: 100%; }
     const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); undo(); return; }
     if (typing) return;
+    if (e.key === 'Escape' && selGuard) { selGuard = null; guardUi(); draw(); return; }
     if (e.key === ' ') { spaceDown = true; cv.style.cursor = 'grab'; e.preventDefault(); }
-    const map = { '0': 'pan', '1': '#', '2': '.', '3': 'S', '4': 'E', '5': '*', '6': 'M', '7': 'F', '8': 'K', '9': 'H', c: 'C', v: 'V', l: 'L', r: 'R', g: 'G', b: 'B', t: 'T', x: 'X', w: 'W', z: 'Z', p: 'P', a: 'A', d: 'D', n: 'N' };
+    const map = { '0': 'pan', '1': '#', '2': '.', '3': 'S', '4': 'E', '5': '*', '6': 'M', '7': 'F', '8': 'K', '9': 'H', c: 'C', v: 'V', l: 'L', r: 'R', g: 'G', b: 'B', t: 'T', x: 'X', u: 'U', i: 'I', j: '/', k: '\\', q: 'Q', w: 'W', z: 'Z', p: 'P', a: 'A', d: 'D', n: 'N' };
     if (map[e.key] && !e.ctrlKey && !e.metaKey && !e.altKey) setTool(map[e.key]);
     if (e.key === '+' || e.key === '=') zoomAt(1.25, CW / 2, CH / 2);
     if (e.key === '-') zoomAt(0.8, CW / 2, CH / 2);
@@ -613,19 +924,19 @@ dialog input { width: 100%; }
 
   /* ---------- actions ---------- */
   function generate() {
-    extraHeader = [];
+    setExtra([]); selGuard = null; guardUi();
     pushUndo();
     const w = parseInt($('gw').value, 10) || 41, h = parseInt($('gh').value, 10) || 41;
-    const g = Maze.generate({ w: Math.min(401, w), h: Math.min(401, h), braid: (parseInt($('gbraid').value, 10) || 0) / 100, gems: parseInt($('ggems').value, 10) || 0, enemies: parseInt($('genemies').value, 10) || 0, fires: parseInt($('gfires').value, 10) || 0, seed: $('gseed').value || 'lanterna' });
+    const g = Maze.generate({ w: Math.min(MAX_SIDE, w), h: Math.min(MAX_SIDE, h), braid: (parseInt($('gbraid').value, 10) || 0) / 100, gems: parseInt($('ggems').value, 10) || 0, enemies: parseInt($('genemies').value, 10) || 0, fires: parseInt($('gfires').value, 10) || 0, seed: $('gseed').value || 'lanterna' });
     $('gw').value = g.w; $('gh').value = g.h;
     setRows(g.rows);
     changed();
     toast(`Generato ${g.w} × ${g.h}, percorso più breve ${g.par} passi.`);
   }
   function blank() {
-    extraHeader = [];
+    setExtra([]); selGuard = null; guardUi();
     pushUndo();
-    const w = Math.max(5, Math.min(401, parseInt($('gw').value, 10) || 41)), h = Math.max(5, Math.min(401, parseInt($('gh').value, 10) || 41));
+    const w = Math.max(5, Math.min(MAX_SIDE, parseInt($('gw').value, 10) || 41)), h = Math.max(5, Math.min(MAX_SIDE, parseInt($('gh').value, 10) || 41));
     const rows = [];
     for (let y = 0; y < h; y++) {
       let r = '';
@@ -642,7 +953,16 @@ dialog input { width: 100%; }
   $('gen').addEventListener('click', generate);
   $('blank').addEventListener('click', blank);
   $('undo').addEventListener('click', undo);
-  ['lname', 'ltorch', 'lpar', 'lspeed', 'fname'].forEach(id => $(id).addEventListener('input', changed));
+  ['lname', 'ltorch', 'lpar', 'lspeed', 'ldrain', 'fname'].forEach(id => $(id).addEventListener('input', changed));
+  $('ctype').addEventListener('change', () => {
+    const t = $('ctype').value;
+    // the waves still at the default of the other type follow the new type
+    if (JSON.stringify(crypt.waves) === JSON.stringify(CRYPT_DEF[crypt.type])) crypt.waves = CRYPT_DEF[t].map(w => ({ ...w }));
+    crypt.type = t; cryptUi(true); changed();
+  });
+  $('cwaveAdd').addEventListener('click', () => { const last = crypt.waves[crypt.waves.length - 1] || { n: 3, h: 0 }; crypt.waves.push({ n: last.n, h: Math.min(4, last.h + 1) }); cryptUi(true); changed(); });
+  $('chp').addEventListener('input', () => { crypt.hp = clampI($('chp').value, 1, 9, 3); changed(); });
+  $('creward').addEventListener('input', () => { crypt.reward = clampI($('creward').value, 1, 9, 3); changed(); });
   $('lparAuto').addEventListener('change', changed);
   $('showPath').addEventListener('change', draw);
   $('zin').addEventListener('click', () => zoomAt(1.25, CW / 2, CH / 2));
@@ -664,14 +984,14 @@ dialog input { width: 100%; }
     try {
       const [h] = await window.showOpenFilePicker({ types: FS_TYPES, multiple: false });
       const f = await h.getFile();
-      loadText(await f.text()); fileHandle = h; $('fname').value = f.name; fileUi();
+      loadText(await f.text()); fileHandle = h; $('fname').value = f.name; fileUi(); dirIdx = -1; navUi();
       toast('Aperto ' + f.name + ': Salva scrive direttamente in questo file.');
     } catch (e) { if (e && e.name !== 'AbortError') $('openFile').click(); }
   });
   async function writeTo(h) {
     validate();
     const w = await h.createWritable(); await w.write(currentText()); await w.close();
-    fileHandle = h; $('fname').value = h.name; fileUi();
+    fileHandle = h; $('fname').value = h.name; fileUi(); savedText = currentText();
     toast('Salvato in ' + h.name + '.' + (parsed.errors.length ? ' Attenzione: il livello ha errori, il gioco non lo aprirà.' : ''));
   }
   async function saveAs() {
@@ -681,6 +1001,102 @@ dialog input { width: 100%; }
     catch (e) { if (e && e.name !== 'AbortError') toast('Salvataggio non riuscito: ' + (e.message || e)); }
   }
   $('saveAs').addEventListener('click', saveAs);
+
+  /* ---------- open a folder: list the levels it contains (size of the maze, shortest path, errors); click one to open it ---------- */
+  let dirHandle = null, dirRows = [];
+  const natural = (a, b) => a.localeCompare(b, 'it', { numeric: true, sensitivity: 'base' });
+  async function scanDir(h, prefix = '', out = [], depth = 0) {
+    for await (const [name, e] of h.entries()) {
+      if (name.startsWith('.')) continue;
+      if (e.kind === 'file' && /\.txt$/i.test(name)) out.push({ path: prefix + name, name, handle: e, getFile: () => e.getFile() });
+      else if (e.kind === 'directory' && depth < 2) await scanDir(e, prefix + name + '/', out, depth + 1);
+    }
+    return out;
+  }
+  // moving between the levels of the opened folder (◀ ▶, the list, Pag ↑ / Pag ↓)
+  let dirLevels = [], dirIdx = -1, savedText = null;
+  async function openLevelAt(i) {
+    const r = dirLevels[i]; if (!r) return;
+    if (dirIdx >= 0 && savedText != null && currentText() !== savedText && !confirm('Il livello ' + dirLevels[dirIdx].path + ' ha modifiche non salvate. Cambiare livello lo stesso?')) { navUi(); return; }
+    let text = r.text;
+    try { text = await (await r.getFile()).text(); r.text = text; } catch (e) {}     // read again: it may have been saved meanwhile
+    loadText(text); $('fname').value = r.name;
+    fileHandle = r.handle || null; fileUi();
+    dirIdx = i; navUi();
+    if ($('folderDlg').open) $('folderDlg').close();
+    setTimeout(() => { savedText = currentText(); }, 300);
+    toast('Aperto ' + r.path + ` (${i + 1} di ${dirLevels.length})` + (r.handle ? ': Salva scrive direttamente in questo file.' : '.'));
+  }
+  function navUi() {
+    $('lvNav').hidden = dirLevels.length < 1 || dirIdx < 0;
+    const sel = $('lvSel');
+    if (sel.options.length !== dirLevels.length) sel.innerHTML = dirLevels.map((r, i) => `<option value="${i}"></option>`).join('');
+    [...sel.options].forEach((o, i) => { const r = dirLevels[i]; o.textContent = `${r.path} · ${r.lv.w}×${r.lv.h}` + (r.lv.name ? ' · ' + r.lv.name : ''); });
+    sel.value = String(dirIdx);
+    $('lvPrev').disabled = dirIdx <= 0; $('lvNext').disabled = dirIdx >= dirLevels.length - 1;
+  }
+  $('lvPrev').addEventListener('click', () => openLevelAt(dirIdx - 1));
+  $('lvNext').addEventListener('click', () => openLevelAt(dirIdx + 1));
+  $('lvSel').addEventListener('change', () => openLevelAt(parseInt($('lvSel').value, 10)));
+  document.addEventListener('keydown', e => {
+    if ($('lvNav').hidden || e.target.closest('input, textarea, select') || $('folderDlg').open) return;
+    if (e.key === 'PageUp' && dirIdx > 0) { e.preventDefault(); openLevelAt(dirIdx - 1); }
+    if (e.key === 'PageDown' && dirIdx < dirLevels.length - 1) { e.preventDefault(); openLevelAt(dirIdx + 1); }
+  });
+  async function showFolder(title, entries) {
+    $('folderTitle').textContent = 'Livelli in ' + title;
+    $('folderInfo').textContent = 'Lettura dei file…';
+    $('folderRows').innerHTML = '';
+    if (!$('folderDlg').open) $('folderDlg').showModal();
+    dirRows = [];
+    for (const e of entries.sort((a, b) => natural(a.path, b.path))) {
+      try {
+        const text = await (await e.getFile()).text();
+        const lv = Maze.parseLevel(text);
+        dirRows.push({ ...e, text, lv, isLevel: lv.w > 0 && lv.h > 0 && text.includes('---') });
+      } catch (err) { dirRows.push({ ...e, text: '', lv: null, isLevel: false }); }
+    }
+    const levels = dirRows.filter(r => r.isLevel);
+    dirLevels = levels; dirIdx = -1; $('lvSel').innerHTML = ''; navUi();
+    $('folderInfo').textContent = levels.length
+      ? `${levels.length} livell${levels.length === 1 ? 'o' : 'i'} trovat${levels.length === 1 ? 'o' : 'i'}${dirRows.length > levels.length ? ` (più ${dirRows.length - levels.length} file .txt che non ${dirRows.length - levels.length === 1 ? 'è un livello' : 'sono livelli'})` : ''}. Clicca su una riga per aprirlo.`
+      : 'Nessun livello in questa cartella.';
+    const tb = $('folderRows'); tb.innerHTML = '';
+    for (const r of levels) {
+      const tr = document.createElement('tr'); tr.tabIndex = 0;
+      const lv = r.lv, bad = lv.errors.length;
+      tr.innerHTML = '<td></td><td class="nm"></td><td class="num"></td><td class="num"></td><td></td>';
+      const c = tr.children;
+      c[0].textContent = r.path;
+      c[1].textContent = lv.name || '—';
+      c[2].textContent = `${lv.w} × ${lv.h}`;
+      c[3].textContent = lv.shortest != null ? lv.shortest.toLocaleString('it-IT') + ' passi' : '–';
+      c[4].textContent = bad ? `✕ ${bad} error${bad === 1 ? 'e' : 'i'}` : '✓ valido'; c[4].className = bad ? 'bad' : 'ok';
+      if (bad) c[4].title = lv.errors.map(x => (x.line ? `Riga ${x.line}: ` : '') + x.msg).join('\n');
+      const open = () => openLevelAt(levels.indexOf(r));
+      tr.addEventListener('click', open);
+      tr.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(); } });
+      tb.appendChild(tr);
+    }
+  }
+  $('folderBtn').addEventListener('click', async () => {
+    if (!('showDirectoryPicker' in window)) return $('openDir').click();
+    try {
+      dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      await showFolder(dirHandle.name, await scanDir(dirHandle));
+    } catch (e) { if (e && e.name !== 'AbortError') { toast('Non riesco ad aprire la cartella: ' + (e.message || e)); } }
+  });
+  $('openDir').addEventListener('change', async e => {
+    const files = [...e.target.files].filter(f => /\.txt$/i.test(f.name) && !f.name.startsWith('.'));
+    const root = (files[0] && files[0].webkitRelativePath.split('/')[0]) || 'cartella';
+    dirHandle = null;
+    await showFolder(root, files.map(f => ({ path: f.webkitRelativePath.split('/').slice(1).join('/') || f.name, name: f.name, handle: null, getFile: async () => f })));
+    e.target.value = '';
+  });
+  $('folderRescan').addEventListener('click', async () => {
+    if (dirHandle) await showFolder(dirHandle.name, await scanDir(dirHandle));
+    else { $('folderDlg').close(); $('openDir').click(); }
+  });
 
   /* ---------- share with the community: a pull request that adds one file to community/levels/ ---------- */
   const COMMUNITY = { repo: 'rodaown/lanterna-community', branch: 'main', dir: 'community/levels' };
@@ -695,6 +1111,9 @@ dialog input { width: 100%; }
     sharePathUi();
     $('shareDlg').showModal();
   });
+  // the first time a player needs a fork: done on its own page, because GitHub's "Fork this repository" button on the
+  // prefilled new-file page fails when the link carries the whole maze ("An unexpected error occurred")
+  $('shareFork').addEventListener('click', () => { window.open(`https://github.com/${COMMUNITY.repo}/fork`, '_blank', 'noopener'); });
   $('shareGo').addEventListener('click', () => {
     const name = slug($('shareName').value);
     if (!/^[a-z0-9][a-z0-9-]{1,47}$/.test(name)) { toast('Nome del file non valido: almeno 2 caratteri, lettere minuscole, numeri e trattini.'); return; }
@@ -705,16 +1124,16 @@ dialog input { width: 100%; }
     const tooLong = full.length > 7500;     // very long links can be refused: then the text is pasted by hand
     window.open(tooLong ? base : full, '_blank', 'noopener');
     $('shareDlg').close();
-    toast(tooLong ? 'Labirinto grande: su GitHub incolla il testo (Ctrl/Cmd+V), è già copiato.' : 'Su GitHub: Commit changes → Propose changes → Create pull request.');
+    toast('Testo del labirinto copiato. Su GitHub: Commit changes → Propose changes → Create pull request.');
   });
-  ['gen', 'blank', 'fromText'].forEach(id => $(id).addEventListener('click', () => { fileHandle = null; fileUi(); }));   // a new level: not the opened file any more
+  ['gen', 'blank', 'fromText'].forEach(id => $(id).addEventListener('click', () => { fileHandle = null; fileUi(); dirIdx = -1; navUi(); }));   // a new level: not the opened file any more
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); e.shiftKey && canFS ? saveAs() : $('save').click(); }
   });
   $('openFile').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     loadText(await f.text());
-    $('fname').value = f.name;
+    $('fname').value = f.name; dirIdx = -1; navUi();
     e.target.value = '';
   });
   let downloads = null;
@@ -758,7 +1177,7 @@ dialog input { width: 100%; }
   requestAnimationFrame(() => {
     resize();
     if (draft && draft.rows && draft.rows.length) {
-      extraHeader = draft.extra || [];
+      setExtra(draft.extra);
       setRows(draft.rows);
       $('lname').value = draft.name || ''; $('ltorch').value = draft.torch || 3; $('lspeed').value = draft.speed || '';
       $('lparAuto').checked = draft.parAuto !== false; if (!$('lparAuto').checked) $('lpar').value = draft.par || '';
