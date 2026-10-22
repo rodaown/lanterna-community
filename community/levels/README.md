@@ -9,12 +9,11 @@ Qui ci sono i labirinti di **Lanterna – Il Labirinto Oscuro** creati dai gioca
 ### Come proporre un labirinto
 
 1. Disegna il labirinto con l'**editor di Lanterna**.
-2. Quando il controllo dice "Livello valido", premi **Condividi con la community** (nel pannello a sinistra, sezione File).
-3. Si apre GitHub con il file già pronto in questa cartella. Ti serve un account GitHub (è gratis).
-   Se il testo non compare, incollalo tu: l'editor l'ha già copiato (Ctrl+V o Cmd+V).
-4. Premi **Commit changes… → Propose changes**, poi **Create pull request**.
-   GitHub crea da solo una tua copia del progetto: non devi installare niente.
-5. Un controllo automatico verifica il labirinto. Se è tutto a posto, il proprietario lo guarda e lo approva.
+2. Quando il controllo dice "Livello valido", premi **Condividi con la community** (nel pannello a sinistra, sezione Community).
+3. **Solo la prima volta:** nella finestra che si apre premi **1. Crea la tua copia**. Su GitHub accedi o crea un account (è gratis), premi **Create fork** e torna all'editor.
+4. Premi **2. Apri GitHub**: si apre il nuovo file in questa cartella. Se il testo non compare, incollalo tu: l'editor l'ha già copiato (Ctrl+V o Cmd+V).
+5. Premi **Commit changes… → Propose changes**, poi **Create pull request**.
+6. Un controllo automatico verifica il labirinto. Se è tutto a posto, il proprietario lo guarda e lo approva.
 
 ### Regole
 
@@ -32,12 +31,11 @@ This folder holds the mazes for **Lanterna – The Dark Maze** made by players.
 ### How to submit a maze
 
 1. Draw your maze with the **Lanterna editor**.
-2. When the check says the level is valid, press **Condividi con la community** (Share with the community, left panel, File section).
-3. GitHub opens with the file ready in this folder. You need a free GitHub account.
-   If the text is missing, paste it: the editor has already copied it (Ctrl+V or Cmd+V).
-4. Press **Commit changes… → Propose changes**, then **Create pull request**.
-   GitHub makes your own copy of the project for you: nothing to install.
-5. An automatic check tests the maze. If everything is fine, the owner reviews and approves it.
+2. When the check says the level is valid, press **Condividi con la community** (Share with the community, left panel, Community section).
+3. **First time only:** in the window that opens press **1. Crea la tua copia** (make your copy). On GitHub sign in or create a free account, press **Create fork** and go back to the editor.
+4. Press **2. Apri GitHub** (open GitHub): the new file opens in this folder. If the text is missing, paste it: the editor has already copied it (Ctrl+V or Cmd+V).
+5. Press **Commit changes… → Propose changes**, then **Create pull request**.
+6. An automatic check tests the maze. If everything is fine, the owner reviews and approves it.
 
 ### Rules
 
